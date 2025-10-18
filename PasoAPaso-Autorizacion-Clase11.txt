@@ -1,0 +1,74 @@
+Paso a Paso Autorización:
+--------------------------
+
+Resumen:
+Usar la enumeración Role que ya existe
+Agregar anotaciones de seguridad en los controladores
+Configurar reglas más específicas en SecurityFilterChain
+Implementar comprobaciones de roles en los servicios
+
+Pasos:
+Roles (Role.java)
+public enum Role {
+    USER,   // Usuario regular que puede comprar y vender productos
+    ADMIN   // Administrador con acceso total al sistema
+}
+Es un enum simple que define los roles disponibles
+Elegimos solo dos roles para mantener la simplicidad del e-commerce
+
+
+Configuración de Seguridad (SecurityConfig.java)
+Definí las siguientes reglas:
+Rutas públicas: registro, login y ver productos
+Rutas protegidas: crear/editar/eliminar productos
+Rutas administrativas: solo para admins
+
+.authorizeHttpRequests(auth -> auth
+    // Endpoints públicos
+    .requestMatchers("/api/auth/**").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+    
+    // Endpoints para administradores
+    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+    
+    // Endpoints para usuarios autenticados
+    .requestMatchers(HttpMethod.POST, "/api/productos").authenticated()
+    .requestMatchers(HttpMethod.PUT, "/api/productos/**").authenticated()
+    .requestMatchers(HttpMethod.DELETE, "/api/productos/**").authenticated()
+	
+	
+User.java
+Se agrega el campo role 
+@Enumerated(EnumType.STRING): Guarda el rol como STRING en la base de datos
+
+Retorna los permisos del usuario
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + (role != null ? role.name() : "USER")));
+    }
+
+"ROLE_": Prefijo requerido por Spring Security para roles
+Si el usuario tiene un rol asignado, retorna "ROLE_" + ese rol (ej: "ROLE_ADMIN")
+Si el usuario no tiene rol (role == null), retorna "ROLE_USER" por defecto
+Ejemplo:
+Para un admin: ROLE_ADMIN
+Para un usuario normal: ROLE_USER
+
+	
+AuthenticationService:
+register	
+Encripta la contraseña antes de guardarla
+Asigna rol USER por defecto a nuevos usuarios	
+	
+
+publicos
+GET http://localhost:8080/api/productos
+
+
+Endpoints que requieren autenticación
+POST http://localhost:8080/api/productos
+{
+    "nombre": "Producto Test",
+    "descripcion": "Descripción del producto",
+    "precio": 100.00
+}
+

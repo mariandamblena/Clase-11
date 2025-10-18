@@ -1,0 +1,87 @@
+Paso a Paso Autenticación:
+--------------------------
+
+1- pom.xml 
+agregamos las dependencias necesarias:
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+
+
+2- Usuario.java 
+
+Implementamos la interfaz UserDetailsService de Spring Security SecurityConfig.java
+Es el contrato que Spring Security necesita para:
+	Saber cómo autenticar usuarios (usando email/password en nuestro caso)
+	Obtener los roles/permisos del usuario (a través de getAuthorities())
+	Verificar el estado de la cuenta (si está activa, no bloqueada, etc.)
+
+Agregamos campos necesarios: 
+email y password
+
+
+Implementamos los métodos requeridos por UserDetailsService:
+getAuthorities(): Retorna los roles/permisos del usuario
+getUsername(): Retorna el email como identificador
+isAccountNonExpired(), isAccountNonLocked(), isCredentialsNonExpired(), isEnabled(): Retornan true para la configuración básica
+
+
+
+3- UsuarioRepository.java 
+agregamos métodos necesarios:
+
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+    Optional<Usuario> findByEmail(String email);
+    Boolean existsByEmail(String email);
+}
+
+El nombre del método findByEmail sigue la convención de nombres de Spring Data:
+find: indica que es una operación de búsqueda
+By: indica que lo que sigue es el criterio de búsqueda
+Email: es el nombre del campo en la entidad Usuario
+SELECT * FROM usuario WHERE email = ?
+
+existsByEmail, que sigue la misma convención.
+
+
+4- Creamos los DTOs para las peticiones: Data Transfer Object
+RegisterRequest solo contiene los datos necesarios para el registro, la entidad Usuario tiene más campos
+LoginRequest solo necesita user pass 
+
+RegisterRequest.java:
+LoginRequest.java:
+
+5 -AuthenticationController.java 
+para exponer los endpoints
+/api/auth/register
+/api/auth/login
+
+6- AuthenticationService.java 
+implementar la lógica de autenticación
+register
+authenticate
+
+7- SecurityConfig.java 
+
+SecurityConfig:
+	Configura el UserDetailsService para cargar usuarios desde la base de datos
+	Define el PasswordEncoder para encriptar contraseñas
+	Configura los endpoints públicos (/api/auth/**) y protegidos
+	Deshabilita CSRF para las APIs REST
+
+Usuario implements UserDetails:
+	Permite que Spring Security use nuestra entidad Usuario para la autenticación
+	Define cómo se obtienen las credenciales y roles
+
+AuthenticationService:
+	Maneja el registro encriptando la contraseña
+	Maneja el login usando AuthenticationManager
+
+Esto proporciona una configuración básica de seguridad donde:
+
+Cualquiera puede acceder a /api/auth/register y /api/auth/login
+Todas las demás rutas requieren autenticación
+Las contraseñas se almacenan encriptadas
+La autenticación se realiza contra la base de datos
