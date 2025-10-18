@@ -85,3 +85,4 @@ Cualquiera puede acceder a /api/auth/register y /api/auth/login
 Todas las demás rutas requieren autenticación
 Las contraseñas se almacenan encriptadas
 La autenticación se realiza contra la base de datos
+
