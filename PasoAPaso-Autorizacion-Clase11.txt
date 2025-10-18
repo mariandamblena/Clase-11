@@ -17,6 +17,8 @@ Es un enum simple que define los roles disponibles
 Elegimos solo dos roles para mantener la simplicidad del e-commerce
 
 
+
+
 Configuración de Seguridad (SecurityConfig.java)
 Definí las siguientes reglas:
 Rutas públicas: registro, login y ver productos
